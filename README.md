@@ -26,13 +26,9 @@ on this codebase produces the same quality of code a disciplined senior engineer
 
 ### 1. Apply the boilerplate
 
-Clone or copy this repository into your new project, then move this file to the repository root:
+Clone or copy this repository into your new project.
 
-```bash
-mv rules/README.md ./README.md
-```
-
-The `rules/` folder stays at the repository root — it is the source of truth for engineering policy
+The `rules/` folder stays at the repository root. It is the source of truth for engineering policy
 and the primary context source for AI coding agents.
 
 ### 2. Replace the project-name tag
