@@ -1,0 +1,40 @@
+---
+description: Typed navigation, route contracts, and navigator structure
+globs: src/navigation/**/*.{ts,tsx},src/screens/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Navigation
+
+Navigation uses React Navigation with fully typed routes. Untyped navigation calls are a
+review blocker.
+
+## Typing contract
+
+- Every navigator declares a typed `ParamList`; screens use `NativeStackScreenProps` (or the
+  equivalent for the navigator type).
+- `useNavigation` and `useRoute` are always parameterized with the correct types.
+- **Forbidden:** `navigate('X' as never)`, `as any` on params, or string route names not
+  present in the `ParamList`.
+
+## Route params
+
+- Params are **serializable only** — no functions, class instances, or component references.
+- Params carry identifiers, not payloads: pass an `id` and let the target screen read the
+  entity from the store. Large objects in params break deep linking and state restoration.
+- Params arriving from deep links are **untrusted input** — validate before use
+  (see `security/05-navigation-deeplinks.mdc`).
+
+## Structure
+
+- **Public stack** (unauthenticated): login, onboarding, password recovery.
+- **Authenticated stack**: main app, typically behind bottom tabs.
+- The split between the stacks is driven by auth state from the auth store — screens never
+  decide their own gate.
+- Stack screens use `headerShown: false` with the design-system page header primitive, so
+  header behavior stays consistent and testable.
+
+## Linking
+
+- One central linking configuration maps URLs to routes — no ad-hoc URL parsing in screens.
+- Every route reachable by deep link declares which params it accepts and validates them.

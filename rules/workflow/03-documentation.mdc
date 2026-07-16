@@ -1,0 +1,58 @@
+---
+description: Documentation-as-code — placement, same-PR requirement, wiki structure
+alwaysApply: false
+---
+
+# Documentation
+
+Documentation ships **in the same PR as the code it describes**. Stale docs are defects,
+fixed with the change that made them stale.
+
+## Wiki structure
+
+All developer documentation lives under `docs/`, organized by category — only
+`docs/README.md` sits at the root as the navigation home:
+
+| Category | Path |
+|---|---|
+| Policy | `docs/policy/` |
+| Architecture | `docs/architecture/` |
+| Design System | `docs/design-system/` |
+| Features | `docs/features/{domain}/` |
+| Platform (iOS/Android/Web specifics) | `docs/platform/` |
+| CI / release | `docs/ci/` |
+| Storybook | `docs/storybook/` |
+
+Each category folder has an `Index.md` linking its contents; new categories create the
+folder + `Index.md` and update the parent navigation in the same PR.
+
+## Placement rules
+
+- New design-system component → `docs/design-system/components/{category}/<name>.md`,
+  linked from the design-system index.
+- New store, HTTP surface, or linking behavior → `docs/architecture/`.
+- New product domain → `docs/features/{domain}/`.
+- Security-relevant decisions (pinning setup, storage tiers, auth flow) →
+  `docs/architecture/` with the threat reasoning recorded.
+
+## Same-PR requirements
+
+- Every new public surface (component, store, screen flow, script) ships with its doc.
+- Docs are written in **English prose**; i18n keys are quoted, translated strings are not.
+- Index files and cross-links are updated when files move — broken links are review
+  blockers.
+
+## Rulebook sync
+
+The `rules/` folder is the binding policy summary. When a policy doc under `docs/policy/`
+changes materially, the corresponding rule file under `rules/` is updated **in the same
+PR**, including the index (`rules/00-rules-index.mdc`) when the structure changes.
+Rules summarize; wikis carry full detail, tables, and examples. If they conflict, the
+source doc wins — fix the rule file.
+
+## Writing for humans and LLMs
+
+- Every rule states **what** is required, **what** is forbidden, and **how to verify**.
+- Prefer tables and short imperative sentences over long prose.
+- Never rely on tribal knowledge: name the file paths, commands, and thresholds
+  explicitly so an agent with no prior context can comply.

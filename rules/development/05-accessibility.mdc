@@ -1,0 +1,47 @@
+---
+description: Mandatory accessibility for every interactive surface
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Accessibility
+
+Accessibility is built into components at authoring time — never retrofitted. A surface
+without correct roles, labels, and states is incomplete, not "shippable with a follow-up."
+
+## Required attributes
+
+| Surface | Required |
+|---|---|
+| Button-like | `accessibilityRole="button"`, explicit label, `accessibilityState={{ disabled, busy }}` |
+| Tab | `accessibilityRole="tab"`, `accessibilityState={{ selected }}` |
+| Checkbox / switch | correct role + `accessibilityState={{ checked }}` |
+| Text input | visible label, composed a11y label (label + value + error), hint when needed |
+| Semantic image | `accessibilityLabel`; decorative images hidden from the a11y tree |
+| Header / back action | labeled navigation button with an explicit back label |
+
+## Touch targets
+
+- Minimum touch target of **44×44 pt** (Apple HIG) / **48×48 dp** (Material) — the
+  design-system primitive owns this via `minHeight` and `hitSlop`; screens never shrink it.
+
+## Focus and forms
+
+- Focus order follows a logical top-to-bottom reading order.
+- Multi-field forms: `returnKeyType="next"` between fields, `"done"` on the last field;
+  `onSubmitEditing` triggers the same action as the primary CTA.
+- Modal focus is trapped by the modal provider — no custom focus traps in product code.
+
+## Contrast and motion
+
+- Color combinations come from documented token pairs meeting WCAG AA contrast; new
+  combinations require new tokens, not inline overrides.
+- Animations respect the OS reduce-motion setting where the primitive supports it.
+
+## Web specifics
+
+- React Native a11y props bridge to ARIA via `react-native-web` — do not duplicate with
+  web-only ARIA attributes.
+- Every pressable is keyboard operable (Tab to focus, Enter/Space to activate).
+- Never remove the focus outline without an equivalent token-driven focus treatment.
+- Hover states are an enhancement, never the only affordance.

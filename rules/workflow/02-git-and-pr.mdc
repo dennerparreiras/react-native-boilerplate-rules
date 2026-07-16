@@ -1,0 +1,44 @@
+---
+description: Git hygiene, commit discipline, and pull-request standards
+alwaysApply: false
+---
+
+# Git and pull requests
+
+## Commits
+
+- **English only** — commit messages, PR titles, and review notes.
+- Imperative subject line ≤ 72 chars describing the *why-level* change
+  (`fix: prevent duplicate refresh on concurrent 401s`), optional body for context.
+- Conventional-commit prefixes (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`)
+  keep history machine-readable.
+- Every commit on a shared branch passes the quality gates
+  (`workflow/01-quality-gates.mdc`).
+- Never commit secrets, env files with real values, or signing material
+  (`security/07-supply-chain-secrets.mdc`). A leaked secret is rotated, not just removed.
+
+## Branches
+
+- Short-lived feature branches off the main branch; rebase or merge from main frequently
+  to keep diffs reviewable.
+- Branch names: `feat/<domain>-<summary>`, `fix/<domain>-<summary>`.
+
+## Pull requests
+
+- **Single coherent intent per PR** — no unrelated refactors mixed into feature work.
+  Large mechanical changes (renames, formatting) ship as separate PRs.
+- Description answers three questions: **what** changed, **why**, and **how it was
+  verified** (commands run, screens/stories exercised, platforms checked).
+- Screenshots or Storybook links for visible changes.
+- New dependencies and non-trivial performance costs are called out explicitly.
+- Security-review triggers (`security/01-security-principles.mdc`) are declared when hit.
+- The author runs all quality gates locally **before** requesting review.
+
+## Review blockers (non-exhaustive)
+
+- Missing tests for new rules modules or changed decision logic.
+- Ad-hoc UI bypassing the design system; hard-coded copy or style values.
+- Accessibility gaps on interactive surfaces.
+- TypeScript/lint failures or forbidden suppressions.
+- Sensitive data in the wrong storage tier; unvalidated external input.
+- Stale or missing documentation for new public surfaces.

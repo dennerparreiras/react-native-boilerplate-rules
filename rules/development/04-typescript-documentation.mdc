@@ -1,0 +1,66 @@
+---
+description: Strict TypeScript practices and mandatory JSDoc standard
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript and documentation
+
+## TypeScript
+
+- `strict: true` always — no implicit `any`, no explicit `any` shortcuts, no non-null
+  assertions (`!`) on un-narrowed values.
+- Enable and honor `noUncheckedIndexedAccess`: treat dynamic index reads as possibly
+  `undefined` and narrow before use.
+- `interface` for extendable object shapes; `type` for unions, intersections, and mapped types.
+- Component props use **explicit variant unions** (`'primary' | 'secondary'`) — never a
+  free-form `string`.
+- Unknown external data (API responses, deep-link params, storage reads) enters as
+  `unknown` and is narrowed with type guards or schema validators before use.
+- Path aliases (`@components/*`, `@stores/*`, `@lib/*`, …) are used consistently across
+  features. **Inside** a multi-file package, use relative imports between siblings to avoid
+  circular barrel dependencies.
+
+## React and hooks
+
+- Hooks are called unconditionally at the top level.
+- Effect dependency arrays are narrow and accurate.
+- `useMemo` / `useCallback` bodies are pure — side effects belong in `useEffect` only.
+- Every effect that subscribes, schedules, or opens a resource returns a cleanup function.
+
+## Comments
+
+- English only. Comments explain **why** (intent, trade-off, constraint) — never narrate
+  what the code visibly does.
+- **Anchor comments** sit directly above non-obvious logic blocks, with no blank line
+  between the comment and the block.
+- Stale comments are defects — update them in the same change that alters the code.
+
+## JSDoc (mandatory)
+
+Required on every: exported function, method, hook, `useCallback` / `useMemo` / `useEffect`,
+store action, type, component, and event handler.
+
+```typescript
+/**
+ * Short imperative summary of what the symbol does.
+ *
+ * @param {Type} name - Meaningful description of the parameter.
+ * @returns {ReturnType} What the returned value represents.
+ * @example
+ * const result = computeTotal(items);
+ */
+```
+
+- The summary is a complete sentence; every parameter is documented; `@returns` is present
+  whenever a value is returned.
+- `@example` for non-trivial public APIs.
+- Component props are documented on the props interface, per field.
+- Effects document their dependency contract and cleanup behavior.
+- Non-obvious complexity (see `development/07-performance.mdc`) is recorded in the JSDoc of
+  the affected symbol.
+
+## Forbidden suppressions
+
+`// @ts-ignore`, `// @ts-expect-error` without a tracked justification, `as any`, and ad-hoc
+`// eslint-disable` lines. Errors are triaged per `workflow/01-quality-gates.mdc`, never silenced.

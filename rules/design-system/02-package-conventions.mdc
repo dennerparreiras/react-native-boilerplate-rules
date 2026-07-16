@@ -1,0 +1,63 @@
+---
+description: Design-system tokens, layout ownership, lists, and Storybook coverage
+globs: src/components/**/*.{ts,tsx},src/theme/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Design-system package conventions
+
+## Token discipline
+
+- **Colors** come from the central palette module (`src/theme/colors.ts`) through variant
+  contracts — **no new hard-coded hex values anywhere**, including `styled.ts`.
+- **Spacing** comes from the measures module (`src/theme/measures.ts`) and per-package
+  token modules (`ds*Tokens.ts`).
+- **Typography** comes from the typography system through the text primitive's variants —
+  never ad-hoc `fontSize` / `fontWeight` pairs.
+- Component-scoped tokens (button fill/text/pressed/disabled, panel variants) are used only
+  inside their owning primitive; screens consume the primitive, not its tokens.
+- New tokens are added only when the existing set cannot model the use case — palette
+  growth is governed, not organic.
+
+## Layout ownership
+
+- Page padding, safe area, and keyboard avoidance are owned by the **page-layout
+  primitive**; modals by the **modal-layout primitive**. Children never add competing page
+  gutters or their own keyboard logic.
+- Stack screens use `headerShown: false` with the page-header primitive.
+- Bottom navigation is fixed at the viewport bottom; the keyboard floats above it.
+
+## Lists and virtualization
+
+- Short, finite lists (settings, summaries) may use a simple list primitive or `ScrollView`.
+- Unbounded or growing lists use `FlatList` / `FlashList` with tuned performance props,
+  memoized row components, and stable callbacks.
+- Validate inverted lists on web — behavior differs from native.
+
+## Storybook coverage (required for every primitive)
+
+- All API variants.
+- Loading, disabled, selected, checked, and busy states.
+- Long-content and short-content scenarios.
+- Edge cases: empty lists, error rows, RTL-safe directional layout.
+- Regenerate the story registry after story changes and verify web Storybook renders
+  without console errors.
+
+## Accessibility defaults (built into primitives)
+
+- Semantic roles; `accessibilityState` for disabled/busy/loading.
+- Labels and hints whenever visible text is icon-only or insufficient.
+- Contrast via documented variant pairs — no inline color overrides.
+- Touch-target minimums owned by the primitive (`minHeight`, `hitSlop`).
+- Web: RN props bridge to ARIA; keyboard operability; never `outline: none` without a
+  token-driven focus replacement.
+
+## New component contribution flow
+
+1. Map required tokens in the theme first.
+2. Define the typed API with variant unions and JSDoc on every prop.
+3. Implement interaction states (pressed / disabled / loading).
+4. Write Storybook stories for all variants and states.
+5. Write the component doc page under `docs/design-system/components/` and link it from the
+   design-system index.
+6. Run the scoped validation gates (`design-system/03-quality-gates.mdc`).

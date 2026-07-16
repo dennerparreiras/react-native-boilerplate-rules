@@ -1,0 +1,50 @@
+---
+description: Network security — TLS, certificate pinning, API hygiene
+globs: src/lib/**/*.{ts,tsx},src/stores/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Network security
+
+## Transport
+
+- **HTTPS only, everywhere.** No `http://` endpoints in any environment, including staging.
+- Enforce at the platform layer: iOS App Transport Security stays enabled with no
+  broad `NSAllowsArbitraryLoads` exception; Android `networkSecurityConfig` sets
+  `cleartextTrafficPermitted="false"`.
+- Minimum TLS 1.2; prefer TLS 1.3 where the backend supports it.
+
+## Certificate pinning
+
+- Pin the backend's certificate or public key (SPKI hash) for production API hosts using a
+  vetted pinning library or the platform network-security config.
+- Ship **backup pins** for the next key rotation, and define the rotation runbook before
+  enabling pinning — a bricked app is the failure mode of unplanned rotation.
+- Pin-validation failure **fails closed**: no silent fallback to unpinned connections.
+- Debug builds may relax pinning for local proxying; the relaxation is compile-time gated
+  and impossible in release builds.
+
+## Single HTTP client
+
+- All HTTP goes through the shared client module (`src/lib/httpClient.ts`). Raw `fetch` /
+  `axios` calls scattered in product code are forbidden — the client owns:
+  - Base URL per environment (never user-controllable).
+  - Auth-header injection and token refresh (see `security/04-authentication.mdc`).
+  - Timeouts and bounded retries with backoff (no infinite retry storms).
+  - Consistent error normalization — server error bodies are never rendered raw to users.
+- WebSockets go through a single owned client with the same auth and reconnect discipline.
+
+## API hygiene
+
+- Validate response shapes at the boundary (mappers narrow `unknown` → typed models);
+  a malformed response degrades to a typed fallback, never a crash or a trusted value.
+- Never build URLs by concatenating unvalidated user input; encode all path/query params.
+- Idempotency keys on mutating requests that may be retried.
+- No sensitive data in query strings (they leak into logs and proxies) — use headers or
+  request bodies.
+
+## Environments
+
+- Environment endpoints and keys live in per-environment config files consumed at build
+  time; the production app cannot be pointed at arbitrary hosts at runtime.
+- Any in-app environment switcher is `__DEV__`-only.

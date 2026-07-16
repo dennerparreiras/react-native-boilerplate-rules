@@ -1,0 +1,37 @@
+---
+description: Jest tooling, renderer policy, and snapshot policy
+globs: **/*.test.{ts,tsx},**/*.integration.test.tsx,jest.config.js,jest.setup.js
+alwaysApply: false
+---
+
+# Testing tooling
+
+## Runner and commands
+
+- **Jest** with `preset: 'react-native'` (`jest.config.js`).
+- Run: `npm test`; single suite: `npm test -- <name>`.
+- Shared setup in `jest.setup.js`: Testing Library cleanup, timer reset, global mocks for
+  native modules that lack JS implementations.
+- CI runs `npm test -- --ci` plus lint and typecheck on every PR
+  (see `workflow/01-quality-gates.mdc`).
+
+## Component renderer policy
+
+- **All component tests** use `@testing-library/react-native` — query by role, label, text,
+  or `testID`, in that order of preference.
+- `react-test-renderer` is deprecated upstream and is not used.
+- Never mix renderers in one file.
+
+## Snapshot policy
+
+**Zero snapshots.** Snapshot tests assert everything and therefore nothing; they break on
+irrelevant changes and pass on relevant ones. Assert explicit roles, labels, `testID`s, and
+resolved token values instead.
+
+## Practices
+
+- Tests are fast and deterministic — no real network, no wall-clock `Date.now` without fake
+  timers, no order dependence between tests.
+- Use stable kebab-case `testID`s on key surfaces; they double as E2E hooks later.
+- Run the full suite before requesting review on changes touching `src/features/`,
+  `src/mappers/`, or `src/stores/`.

@@ -1,0 +1,37 @@
+---
+description: Internationalization rules for all user-visible copy
+globs: src/i18n/**/*,src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Internationalization
+
+All user-visible strings come from the i18n catalogs. Hard-coded user-facing text in
+product code is a release-blocking defect.
+
+## Rules
+
+- Strings come from `src/i18n/locales/` via the translation hook (`useTranslation` /
+  `t(...)`). No inline English in JSX, alerts, toasts, or error messages shown to users.
+- Keys are **namespaced by feature**: `onboarding.welcome.title`, `settings.account.delete`.
+- **Never concatenate** translated fragments to build sentences — the locale file owns the
+  full sentence; use interpolation variables for dynamic parts.
+- Every new key is added to **all supported locales in the same change**. Copying the
+  English text into non-English catalogs as a placeholder is forbidden.
+- Interpolation variable names, placeholders, and line-break structure must match across
+  locales.
+- Brand and platform terms ({{PROJECT_NAME}}, `Face ID`, `Touch ID`) stay untranslated when
+  identity requires it.
+- User-facing error messages are i18n keys or error codes resolved at render time — stores
+  and rules modules never emit raw display strings.
+
+## Directional layout (RTL readiness)
+
+- Use logical directional properties (`marginStart`, `paddingEnd`) instead of hard-coded
+  `left`/`right` on directional components.
+- Validate list and chat layouts with long content and RTL where supported.
+
+## Verification
+
+- Run the locale-consistency check (key parity across catalogs) whenever locale files are
+  touched; wire it as an npm script (e.g. `npm run i18n-verify`) and a CI gate.

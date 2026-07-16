@@ -1,0 +1,77 @@
+---
+description: State management, business-rule isolation, and store layout
+globs: src/stores/**/*.{ts,tsx},src/features/**/*.ts,src/mappers/**/*.ts,**/*Rules.ts
+alwaysApply: false
+---
+
+# Architecture and state management
+
+State lives in **Zustand stores organized by feature domain**. Pure decisions live in
+**rules modules**. Screens compose both; they never own business logic.
+
+## Business rules
+
+A **business rule** is any decision expressible without React, React Native APIs, network,
+or device access: validation, derivation, sorting, filtering, mapping, payload building.
+
+**Rules live in pure `.ts` modules** — never in `*.tsx` files, store bodies, or hook bodies.
+
+| Domain | Path |
+|---|---|
+| App features | `src/features/<domain>/` |
+| API response/request mappers | `src/mappers/` |
+| Design-system helpers | colocated inside the component package |
+| Screen-specific rules | `<screenName>Rules.ts` next to the screen |
+| Store-specific rules | `<Domain>Rules.ts` next to the store |
+
+**Naming:** `*Rules.ts`, `*Adapter.ts`, `*Manager.ts`, `*Builder.ts`. Never a repo-wide
+catch-all `businessRules.ts` or `utils.ts` mixing unrelated domains.
+
+**Testing:** exactly one colocated `*.test.ts` per rules module, with a `describe` block
+per function or scenario.
+
+## Store layout (`src/stores/<Domain>/`)
+
+```
+<Domain>.ts            # orchestration: state, actions, HTTP, persistence, cross-store reads
+<Domain>Rules.ts       # pure decisions: validation, derivation, mapping, payload builders
+<Domain>Rules.test.ts  # Jest for the rules module
+<Domain>.test.ts       # Jest for the store with HTTP/storage/sibling stores mocked
+types.ts               # store state and payload types
+index.ts               # barrel
+```
+
+| Concern | Location |
+|---|---|
+| HTTP calls, retries, optimistic state | `<Domain>.ts` |
+| Persistence (AsyncStorage / MMKV / secure storage) | `<Domain>.ts` via the shared base-store factory |
+| Cross-store reads | `<Domain>.ts` |
+| Validation, derivation, mapping | `<Domain>Rules.ts` |
+
+- Store action bodies stay **short** and delegate to the rules module. Pure decisions never
+  live inside `set` callbacks.
+- Error handling: `catch (err: unknown)` + narrow with `instanceof Error`. User-facing errors
+  are i18n keys or error codes, never raw English strings.
+- HTTP goes exclusively through the shared HTTP client module (`src/lib/httpClient.ts`);
+  raw `fetch` is forbidden in product code. WebSockets go through a single owned client.
+
+## Store consumption in components
+
+- Subscribe to the **smallest slice** needed; multi-field reads use shallow selectors.
+- Event handlers read via `getState()` instead of subscribing.
+- Selectors are stable — never recreated inline in render bodies.
+
+## Persistence
+
+- `partialize` persisted state to stable, user-relevant fields only — never ephemeral UI
+  state, in-flight flags, or derived data.
+- Kebab-case storage keys namespaced by domain: `auth-storage`, `settings-storage`.
+- Schema changes use `version` + `migrate` on the store factory, never silent shape drift.
+- Sensitive fields (tokens, PII) never go into plain AsyncStorage — see
+  `security/02-data-protection.mdc`.
+
+## Forbidden patterns
+
+- Long ordering/filter/validation chains in JSX or hook bodies.
+- The same conditional duplicated across screens or stores — one function, one test.
+- Testing pure logic only through Storybook or screenshots.

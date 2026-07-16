@@ -1,0 +1,54 @@
+---
+description: Security principles and threat model — security-by-default posture
+alwaysApply: true
+---
+
+# Security principles
+
+{{PROJECT_NAME}} treats security as a design input, not a patch. These principles align
+with **OWASP MASVS** (Mobile Application Security Verification Standard) and apply to every
+change. In any conflict between convenience and security, security wins.
+
+## Threat model (assume all of these)
+
+- The device may be lost, stolen, rooted, or jailbroken.
+- The network may be hostile (public Wi-Fi, MITM proxies, DNS spoofing).
+- The app binary **will** be decompiled — anything shipped in the bundle is public.
+- Deep links, push payloads, clipboard content, and API responses are **untrusted input**.
+- Other apps on the device may attempt to read exported surfaces, intents, or URL schemes.
+
+## Core rules
+
+1. **Least privilege** — request only the OS permissions the feature needs, at the moment
+   of use, with a user-facing rationale. Remove permissions when features are removed.
+2. **Untrusted input everywhere** — validate and narrow all external data (API responses,
+   deep-link params, storage reads after tampering, push payloads) before use. `unknown`
+   in, typed and validated out.
+3. **No secrets in the bundle** — API keys that grant privileged access, signing material,
+   and credentials never ship in JS, env files bundled into the binary, or source control
+   (see `security/07-supply-chain-secrets.mdc`).
+4. **Defense in depth** — client-side checks are UX, not security. Every authorization
+   decision is enforced server-side; the client never gates access on its own.
+5. **Fail closed** — when a security control cannot be evaluated (pin validation fails,
+   storage integrity is broken), deny and re-authenticate rather than degrade silently.
+6. **Minimal data** — collect, store, and log the minimum personal data required. Data not
+   collected cannot leak.
+7. **Auditable decisions** — non-obvious security trade-offs are documented in the PR and
+   in JSDoc on the affected symbol, with a reference to the rule or standard applied.
+
+## Security review triggers
+
+A change **requires explicit security review** in the PR description when it touches:
+
+- Authentication, session, or token handling.
+- Storage of personal or sensitive data.
+- Deep linking, URL parsing, or WebView usage.
+- New native modules or new third-party dependencies.
+- Permissions, entitlements, or platform manifest changes.
+- Cryptography of any kind (never hand-rolled — see `security/02-data-protection.mdc`).
+
+## Incident posture
+
+- Kill-switch capability: critical flows should be remotely disableable (feature flags)
+  so a discovered vulnerability can be mitigated before a store release lands.
+- Dependencies with published CVEs are patched with priority over feature work.

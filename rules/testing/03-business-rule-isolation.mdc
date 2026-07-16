@@ -1,0 +1,46 @@
+---
+description: Business-rule isolation for testing — placement, naming, anti-patterns
+globs: **/*Rules.ts,**/*Rules.test.ts,src/features/**/*.ts,src/stores/**/*.ts
+alwaysApply: false
+---
+
+# Business-rule isolation (testing)
+
+## Definition
+
+Business rules are decisions expressible **without React**: ordering, validation, mapping,
+visibility flags, a11y string composition, layout math, payload building.
+
+They live in pure modules under `src/features/`, `src/mappers/`, inside design-system
+packages, or as colocated `*Rules.ts` next to a screen or store.
+
+## Module rules
+
+- **Bounded context** — related functions share one module when they belong to the same flow.
+- **Naming:** `*Rules.ts`, `*Adapter.ts`, `*Manager.ts`, `*Builder.ts` — never a repo-wide
+  `businessRules.ts`.
+- **One `*.test.ts` per rules module** with a matching filename stem; one `describe` block
+  per function or scenario.
+- One tiny helper with one test file is fine; the smell is **several** tiny related modules
+  that should merge into one bounded module.
+
+## Merge vs split heuristics
+
+- **Merge** when modules share the same flow, duplicate test setup, and each export little.
+- **Keep separate** when a module reaches roughly 300–500+ lines, has a distinct import
+  graph, or covers a truly independent concern.
+
+## Rules for new code
+
+1. Never embed long ordering/validation logic in JSX — extract to `*Rules.ts` and test it.
+2. Never duplicate a condition across files — one function, one test, many consumers.
+3. When changing decision logic (priority, visibility, ordering): extend the test **first**
+   with the new expectation, then change the rule.
+
+## Anti-patterns (review blockers)
+
+- Catch-all `businessRules.ts` / `utils.ts` mixing unrelated domains.
+- Giant flat test files without `describe` grouping.
+- Storybook stories or screenshots as the only assertion for pure behavior.
+- Screens re-implementing deterministic scenarios that the store/rules tests already
+  own — screen tests mock those boundaries instead.

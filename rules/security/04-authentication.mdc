@@ -1,0 +1,55 @@
+---
+description: Authentication and session security — tokens, biometrics, session lifecycle
+globs: src/stores/**/*.{ts,tsx},src/lib/**/*.{ts,tsx},src/screens/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Authentication and session security
+
+## Token handling
+
+- **Access tokens** are short-lived and held in memory (store state, non-persisted slice).
+- **Refresh tokens** live in the Keychain/Keystore tier only
+  (`security/02-data-protection.mdc`) — never in AsyncStorage or Redux/Zustand persistence.
+- Token refresh is owned by the shared HTTP client: single-flight refresh (concurrent 401s
+  await one refresh, not N), and a failed refresh logs the user out cleanly.
+- Tokens never appear in logs, crash reports, analytics, or URLs.
+
+## Login and credentials
+
+- Password fields: `secureTextEntry`, no clipboard-based autofill suppression hacks, and
+  platform password-manager integration (`textContentType` on iOS, `autofillHints` on
+  Android) enabled — password managers improve security.
+- Never store raw passwords, even encrypted. Authentication exchanges credentials for
+  tokens; the credential is discarded immediately.
+- Rate-limit and lockout are server-side controls; the client displays state, it does not
+  enforce security.
+- OAuth / social login uses the system browser or platform SDK (ASWebAuthenticationSession /
+  Custom Tabs) with PKCE — never a WebView that could harvest credentials.
+
+## Biometrics
+
+- Biometric unlock (Face ID / Touch ID / BiometricPrompt) gates access to a
+  Keychain/Keystore-protected secret — it is **not** a boolean check in JS that a patched
+  binary can flip.
+- Always provide the device-credential fallback the OS offers; never build a custom PIN
+  layer when the platform provides one.
+- Re-prompt for biometrics on cold start and after the OS reports a biometric enrollment
+  change.
+
+## Session lifecycle
+
+- Auth state lives in one auth store; the navigator switches public/authenticated stacks
+  from it. No screen implements its own gate.
+- Inactivity timeout for sensitive apps: lock or logout after a defined idle period, and
+  blank sensitive content when the app backgrounds.
+- **Logout wipes everything:** Keychain entries, encrypted stores, in-memory state,
+  WebSocket connections, and push-notification tokens tied to the account.
+- Server-side session revocation is called on logout — local wipe alone leaves the session
+  alive.
+
+## Account security surfaces
+
+- Email/password change and account deletion require recent authentication (re-auth
+  step-up), enforced server-side and reflected in the flow.
+- Display active-session management when the product supports it.

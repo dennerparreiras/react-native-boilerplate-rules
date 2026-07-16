@@ -1,0 +1,38 @@
+---
+description: Feature and component authoring checklist — confirm before review
+globs: src/screens/**/*.{ts,tsx},src/components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Authoring checklist
+
+Confirm **every** item before opening a change for review. Failure on any item means the
+change is not ready.
+
+1. **Design-system primitives** — no ad-hoc `View` + `Text` + `Pressable` compositions in
+   product screens; missing primitives were created first.
+2. **Token-driven styling** — no new hard-coded hex colors or pixel values.
+3. **File structure** — styles in `styled.ts`, pure logic in `*Rules.ts`, component in its
+   own folder (no monolith append). See `development/08-file-structure.mdc`.
+4. **Layout ownership** — page padding, safe area, and keyboard avoidance are owned by the
+   page/modal layout primitive, not re-implemented in the screen.
+5. **Typed props** with explicit variant unions; JSDoc on the component, props interface,
+   and every hook/callback/effect; anchor comments on non-obvious logic.
+6. **Storybook** — stories cover all variants and states (loading, disabled, selected,
+   busy, empty, long-content); the story registry is regenerated.
+7. **Pure logic extracted** to `*Rules.ts` with colocated tests.
+8. **Accessibility** — roles, labels, states, touch targets, focus order
+   (`development/05-accessibility.mdc`).
+9. **i18n keys** for all user-visible copy, translated in every locale
+   (`development/06-internationalization.mdc`).
+10. **Security review of the surface** — inputs validated, sensitive data handled per
+    `security/02-data-protection.mdc`, deep-link params validated per
+    `security/05-navigation-deeplinks.mdc`.
+11. **Cross-platform** verified on iOS, Android, Web, and Storybook
+    (`development/02-cross-platform.mdc`).
+12. **Complexity analysis** for hot paths, lists, animations, and new dependencies
+    (`development/07-performance.mdc`).
+13. **Documentation** created or updated under the correct `docs/` category and linked from
+    its index (`workflow/03-documentation.mdc`).
+14. **Quality gates green** — lint, typecheck, and the full Jest suite
+    (`workflow/01-quality-gates.mdc`).

@@ -1,0 +1,61 @@
+---
+description: Platform hardening — release configuration, root/jailbreak posture, exposure surface
+globs: android/**/*,ios/**/*,app.json,*.config.js
+alwaysApply: false
+---
+
+# Platform hardening
+
+## Release build configuration
+
+**Android:**
+
+- `debuggable=false`, R8/ProGuard minification and resource shrinking enabled in release.
+- `android:allowBackup="false"` (or a scoped `fullBackupContent` ruleset).
+- `networkSecurityConfig` with cleartext traffic disabled.
+- Only required components are `android:exported="true"`; exported components validate
+  every incoming intent extra as untrusted input.
+- Play App Signing with the upload keystore stored outside the repository
+  (see `security/07-supply-chain-secrets.mdc`).
+
+**iOS:**
+
+- App Transport Security fully enabled — no `NSAllowsArbitraryLoads`.
+- Keychain items use the strictest workable accessibility class
+  (`WhenUnlockedThisDeviceOnly` for device-bound secrets).
+- Entitlements are minimal; every capability maps to a shipped feature.
+- Usage-description strings (`NSCameraUsageDescription`, …) exist for every requested
+  permission and honestly describe the use.
+
+**Both:**
+
+- Hermes bytecode + minification is obfuscation-lite, not protection — never rely on it to
+  hide secrets. The JS bundle is public (see `security/01-security-principles.mdc`).
+- Dev-only surfaces (test screens, environment switchers, verbose logging) are compiled
+  out of release builds via `__DEV__` and build-time flags — not hidden behind UI.
+
+## Debugging and tamper posture
+
+- Remote JS debugging and dev menus are unavailable in release builds (RN default —
+  never re-enable).
+- Root/jailbreak detection is a **product decision by risk profile** (mandatory for
+  financial/health data, optional otherwise). When adopted:
+  - Use a maintained detection library; treat results as a risk signal (limit sensitive
+    features, require re-auth), not a false sense of safety — detection is bypassable.
+  - Fail closed for the highest-risk operations only; do not brick the app for benign users.
+- Screenshot/recording protection on sensitive screens per
+  `security/02-data-protection.mdc`.
+
+## Update hygiene
+
+- Track React Native, Hermes, and native dependency releases; security patches to the RN
+  runtime are adopted on priority.
+- OTA/CodePush-style updates, if used, are signed and served over pinned TLS; an OTA
+  channel that can push arbitrary JS is equivalent to remote code execution and is
+  protected accordingly.
+
+## Permissions
+
+- Request at moment of use with rationale UI; degrade gracefully on denial.
+- Audit the manifest/entitlements each release: any permission without a shipped feature
+  is removed.

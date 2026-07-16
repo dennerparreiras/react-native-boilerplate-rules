@@ -1,0 +1,89 @@
+---
+description: Rulebook entry point — index, precedence, and how the rule chain works
+alwaysApply: true
+---
+
+# {{PROJECT_NAME}} engineering rulebook
+
+This folder is the **single source of truth** for engineering policy in {{PROJECT_NAME}}.
+It is written to be equally consumable by human engineers and LLM coding agents.
+Read this file first; then load the category files relevant to the change being made.
+
+## How the chain works
+
+- Each `.mdc` file has YAML front matter: `description` (what it governs), optional `globs`
+  (which files trigger it), and `alwaysApply`.
+- Rules are **summaries with teeth**: every rule states what is required, what is forbidden,
+  and how to verify. When examples conflict with a stated rule, the rule wins.
+- Category files are self-contained. An agent editing `src/components/` needs the
+  design-system and development files; an agent editing tests needs the testing files;
+  **everyone** needs `workflow/01-quality-gates.mdc` and the security files that touch
+  their change.
+
+## Precedence
+
+1. `security/` — security rules override convenience in any conflict.
+2. `workflow/01-quality-gates.mdc` — no change is complete with red gates.
+3. `development/01-core-principles.mdc` — non-negotiable principles.
+4. Remaining category files.
+
+## Index
+
+### Development (`development/`)
+
+| File | Governs |
+|---|---|
+| `01-core-principles.mdc` | Non-negotiable engineering principles |
+| `02-cross-platform.mdc` | iOS / Android / Web parity, sanctioned divergence |
+| `03-architecture-state.mdc` | State management, business-rule isolation, store layout |
+| `04-typescript-documentation.mdc` | Strict TypeScript, JSDoc, comments |
+| `05-accessibility.mdc` | Roles, labels, states, touch targets, focus |
+| `06-internationalization.mdc` | i18n for all user-visible copy |
+| `07-performance.mdc` | Complexity analysis, render cost, bundle discipline |
+| `08-file-structure.mdc` | Folder layout, style isolation, no monoliths |
+| `09-navigation.mdc` | Typed navigation, route contracts |
+| `10-authoring-checklist.mdc` | Pre-review checklist for every feature |
+
+### Design System (`design-system/`)
+
+| File | Governs |
+|---|---|
+| `01-foundation.mdc` | Design-system-first contract, naming, package layout |
+| `02-package-conventions.mdc` | Tokens, layout ownership, lists, Storybook coverage |
+| `03-quality-gates.mdc` | Component quality bar, scoped validation |
+
+### Testing (`testing/`)
+
+| File | Governs |
+|---|---|
+| `01-tooling.mdc` | Jest setup, renderer policy, snapshot policy |
+| `02-test-layers.mdc` | Unit / store / integration / smoke layers, colocation |
+| `03-business-rule-isolation.mdc` | Pure-module testing, naming, anti-patterns |
+| `04-practices.mdc` | AAA shape, standard mocks, regression policy |
+
+### Security (`security/`)
+
+| File | Governs |
+|---|---|
+| `01-security-principles.mdc` | Threat model, security-by-default posture |
+| `02-data-protection.mdc` | Secure storage, encryption at rest, PII handling |
+| `03-network-security.mdc` | TLS, certificate pinning, API hygiene |
+| `04-authentication.mdc` | Tokens, sessions, biometrics, credential handling |
+| `05-navigation-deeplinks.mdc` | Deep-link validation, screen protection |
+| `06-platform-hardening.mdc` | OS hardening, root/jailbreak posture, release config |
+| `07-supply-chain-secrets.mdc` | Dependency auditing, secrets management |
+
+### Workflow (`workflow/`)
+
+| File | Governs |
+|---|---|
+| `01-quality-gates.mdc` | Zero-tolerance gates, error triage, edit-cycle discipline |
+| `02-git-and-pr.mdc` | Commit hygiene, PR scope and description, review blockers |
+| `03-documentation.mdc` | Documentation-as-code, placement, same-PR requirement |
+
+## Maintaining the rulebook
+
+- When policy changes, update the rule file **and** this index in the same PR.
+- Keep rules generic and product-agnostic; product-specific inventories (component tables,
+  endpoint catalogs) belong in `docs/`, linked from the rule, not duplicated in it.
+- All rulebook prose is written in **English**.

@@ -1,0 +1,55 @@
+---
+description: Design-system quality bar, validation gates, and pure-logic testing
+globs: src/components/**/*.{ts,tsx},src/theme/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Design-system quality bar and gates
+
+A new or modified design-system package is complete only when **all** of the following are
+true:
+
+- Typed props with explicit variant unions (no free-form `string` variants).
+- Token-driven colors and spacing — zero hard-coded values.
+- Accessibility-first defaults (`development/05-accessibility.mdc`).
+- Storybook covers every variant and state listed in
+  `design-system/02-package-conventions.mdc`.
+- A doc page exists under `docs/design-system/components/` and is linked from the
+  design-system index.
+- Colocated Jest tests exist for every extractable piece of pure logic.
+
+## Pure logic inside design-system packages
+
+Behavior expressible without React — layout math, token resolution, a11y string
+composition, badge scaling — lives in a colocated `*.ts` + `*.test.ts` pair.
+
+- **Storybook does not replace Jest** for these rules.
+- Presentational-only components may omit component-level Jest when Storybook covers the
+  surface; smoke tests are welcome but optional.
+- A `styled.ts` containing only static declarations needs no standalone test — until logic
+  is added to it.
+- Inside a package: **relative imports** between siblings — never the package's own alias
+  barrel (circular-dependency risk).
+
+## Required validation (before merge)
+
+Run the scoped gate whenever design-system packages or theme tokens change:
+
+```bash
+npx eslint "src/components/**/*.{ts,tsx}" "src/theme/**/*.{ts,tsx}"
+npx tsc --noEmit --pretty false
+```
+
+Both must be clean, fixed in the same work cycle. CI is a backstop, not the gate.
+
+## Color governance
+
+Use the existing palette first. New tokens only when the current set cannot model the use
+case, added with a clear semantic name (role-based, not appearance-based: `inkPrimary`,
+not `darkGray`).
+
+## In-app component lab (recommended)
+
+Keep a `__DEV__`-only test screen that exercises global overlays (toasts, modals, icon
+fonts) inside the real app shell on all platforms. Extend it whenever a new global overlay
+primitive or modal variant is added — Storybook cannot validate provider wiring.

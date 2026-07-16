@@ -1,0 +1,60 @@
+---
+description: Deep-link validation, navigation protection, and WebView hardening
+globs: src/navigation/**/*.{ts,tsx},src/screens/**/*.{ts,tsx},src/lib/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Navigation and deep-link security
+
+Deep links, universal links, and push-notification payloads are **untrusted input** from
+outside the app boundary. Any app or webpage on the device can fire them with arbitrary
+parameters.
+
+## Link scheme
+
+- Prefer **verified links** — iOS Universal Links and Android App Links with
+  server-hosted association files — over custom URL schemes; custom schemes can be
+  claimed by other apps.
+- Keep a custom scheme only as a fallback, and never for authentication callbacks unless
+  using PKCE (the code is useless without the verifier).
+
+## Deep-link validation (mandatory)
+
+- One central linking configuration maps URLs to routes — no ad-hoc URL parsing in screens.
+- Every deep-link-reachable route validates its params before rendering:
+  - Type-narrow every param (`unknown` → validated type); reject or fall back on failure.
+  - IDs are validated for format; the target entity is fetched with the user's own
+    authorization — the link never grants access by itself.
+  - Reject unexpected params silently rather than passing them through.
+- Malformed links route to a safe default (home) — never a crash, never a blank screen,
+  never an authenticated action.
+
+## Authenticated routing
+
+- Links targeting authenticated screens are **queued, not executed** while logged out: the
+  user authenticates first, then the pending link is validated and dispatched.
+- Sensitive actions (payments, deletions, credential changes) are never directly
+  executable from a link — the link may open the screen; the user confirms the action.
+
+## Outbound navigation
+
+- `Linking.openURL` targets are allow-listed by scheme (`https`, `mailto`, `tel`) —
+  never open a URL built from unvalidated external input.
+- External URLs from API content open in the system browser or a browser view — with the
+  URL visible to the user, not silently in-app.
+
+## WebView hardening (when a WebView is unavoidable)
+
+- Allow-list the origins the WebView may load (`originWhitelist`); block navigation
+  elsewhere via `onShouldStartLoadWithRequest`.
+- `javaScriptEnabled` only when required; never enable file access
+  (`allowFileAccess={false}`, no `file://` URLs).
+- Never inject secrets or tokens into WebView JS contexts; communicate through scoped
+  `postMessage` handlers that validate every message.
+- Never render authentication forms for your own service in a WebView — use system
+  browser sessions (see `security/04-authentication.mdc`).
+
+## Push payloads
+
+- Notification payloads follow the same rule as deep links: validate the routing data,
+  authorize server-side, and treat display strings as untrusted content.

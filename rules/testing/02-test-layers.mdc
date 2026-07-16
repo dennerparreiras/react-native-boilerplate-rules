@@ -1,0 +1,50 @@
+---
+description: Test layers and file placement — unit, store, integration, smoke
+globs: **/*.test.{ts,tsx},**/*.integration.test.tsx
+alwaysApply: false
+---
+
+# Test layers and file placement
+
+## Colocation
+
+Tests live **next to the code under test** — never in a distant mirror tree:
+
+- `*.test.ts` — TypeScript only, no JSX.
+- `*.test.tsx` — may import React.
+- `*.integration.test.tsx` — composite module exercised with many mocked boundaries.
+
+## Layers
+
+| Layer | What it proves | Where |
+|---|---|---|
+| **Unit (pure)** | One module/function with controlled I/O; zero or few mocks | Colocated `*.test.ts` |
+| **Store** | Zustand actions and state transitions; HTTP/storage/sibling stores mocked | `<Domain>.test.ts` |
+| **Module integration** | Real internal orchestration with faked boundaries | `*.integration.test.tsx` |
+| **Smoke** | Component renders with expected roles/`testID`s; heavy children mocked | `*.test.tsx` |
+
+E2E (Detox / Maestro) is a separate concern; unit-level rules only require stable
+kebab-case `testID`s as future E2E hooks.
+
+## Unit test definition
+
+One module or function, controlled inputs and outputs, no app boot, zero or minimal mocks.
+This is the default layer — most business value lives in rules modules tested here.
+
+## Integration test definition
+
+Real orchestration between internal parts, with external boundaries faked (React Native
+APIs, navigation, stores, assets). Use the `*.integration.test.tsx` naming when many
+`jest.mock` calls target one composite behavior.
+
+## Store tests
+
+- Access state via `useStore.getState()`; reset state in `beforeEach`.
+- Mock the HTTP client, sibling stores, mappers, and storage at module level.
+- Assert **state transitions and action return values** — not pure logic, which belongs in
+  the colocated `*Rules.test.ts`.
+
+## Storybook's role
+
+Storybook covers visuals and interactive harnesses. It is **never** a substitute for Jest
+on rules, stores, or pure helpers.

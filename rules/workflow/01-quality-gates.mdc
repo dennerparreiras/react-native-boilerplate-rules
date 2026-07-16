@@ -1,0 +1,54 @@
+---
+description: Zero-tolerance quality gates — lint, typecheck, tests, error triage
+alwaysApply: true
+---
+
+# Quality gates and workflow
+
+Zero tolerance for red code. A change is complete only when every gate below is green.
+"Fix it in the next commit" is not a workflow that exists in {{PROJECT_NAME}}.
+
+## While editing (every file, every cycle)
+
+1. Save the file.
+2. Run scoped gates on the changed paths:
+
+```bash
+npx eslint <changed paths>
+npx tsc --noEmit --pretty false
+```
+
+3. **Triage every error:**
+   - **Trivial** (typo, missing import, simple narrowing) → fix immediately, same cycle.
+   - **Complex or cross-cutting** → stop; surface a correction plan (what is wrong, why a
+     one-liner is unsafe, proposed scope, affected files) before patching.
+4. Never suppress to bypass triage: no `// @ts-ignore`, no `as any`, no non-null assertion
+   on un-narrowed values, no ad-hoc `// eslint-disable`.
+
+## End of work cycle (mandatory, all must pass)
+
+```bash
+npm run lint                       # zero errors, zero new warnings
+npx tsc --noEmit --pretty false    # zero errors
+npm test                           # full Jest suite green
+npm run i18n-verify                # when locale files were touched
+```
+
+- A failing or newly skipped test introduced by the change is a **regression**, not a TODO.
+- Design-system or token changes additionally run the scoped design-system gate
+  (`design-system/03-quality-gates.mdc`).
+- Storybook story changes: regenerate the story registry and verify web Storybook renders
+  without console errors.
+
+## After every commit
+
+- The working tree at each commit passes all gates — no "WIP, broken" commits on shared
+  branches. Use local squashing before pushing if needed.
+- CI re-runs lint, typecheck, and tests on every push and PR. **CI is a backstop, never
+  the first place errors are discovered.**
+
+## Definition of done
+
+A change is done when: gates are green, tests for new logic exist, docs are updated,
+the authoring checklist (`development/10-authoring-checklist.mdc`) passes, and the
+security-review triggers (`security/01-security-principles.mdc`) were evaluated.

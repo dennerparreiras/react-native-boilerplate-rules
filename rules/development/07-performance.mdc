@@ -1,0 +1,45 @@
+---
+description: Performance and complexity analysis for hot paths, lists, and animations
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Performance and complexity
+
+Every change is evaluated against real device cost: battery, memory, dropped frames, and
+bundle size. Mobile hardware is the constraint, not the development machine.
+
+## Mandatory analysis (explicit for hot paths)
+
+1. **Algorithmic** — sort/filter/merge work is O(n log n) at worst; no O(n²) passes over
+   user-visible lists; per-frame hot paths are O(1) or O(log n).
+2. **Render** — unbounded lists use `FlatList` (or `FlashList`) with tuned `keyExtractor`,
+   `windowSize`, and `getItemLayout` where possible; heavy children are memoized; store
+   subscriptions use the smallest slice; styles live in `styled.ts` / `StyleSheet.create`,
+   never inline object literals recreated per render.
+3. **Animation** — animations run on the UI thread (Reanimated worklets); animation assets
+   are sized appropriately; reduce-motion fallbacks exist.
+4. **Bundle** — heavy dependencies are lazy-loaded; no barrel imports that drag entire
+   packages into the initial bundle; every new dependency is justified in the PR.
+5. **Lifecycle** — subscriptions, timers, and sockets are cleaned up on unmount; in-flight
+   async work is aborted; ephemeral UI state is never persisted.
+
+## Recording non-trivial costs
+
+- PR description: expected input size, complexity class, and benchmarks when available.
+- JSDoc complexity note on the affected symbol when the cost is non-obvious.
+- A worst-case-input test in the colocated `*.test.ts`.
+
+## Hot paths (extra scrutiny)
+
+Feed/home screens, real-time views (chat, live data), large history lists, and anything
+rendered during scroll or animation.
+
+## Forbidden (review blockers)
+
+- O(n²) loops over visible lists.
+- Per-render `JSON.parse` / `JSON.stringify` on moderate state.
+- Store selectors recreated inline in render.
+- Synchronous heavy work during scroll or animation frames.
+- Polling faster than the data actually changes.
+- Eagerly loading heavy modules on first render when lazy loading suffices.

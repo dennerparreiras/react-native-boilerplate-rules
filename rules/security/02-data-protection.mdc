@@ -1,0 +1,59 @@
+---
+description: Data protection at rest — secure storage, encryption, PII handling, logging
+globs: src/stores/**/*.{ts,tsx},src/lib/**/*.{ts,tsx},src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Data protection
+
+## Storage tiers (choose deliberately)
+
+| Data class | Storage | Examples |
+|---|---|---|
+| Secrets & credentials | **Keychain (iOS) / Keystore (Android)** via `react-native-keychain` or equivalent | Refresh tokens, biometric-gated secrets |
+| Sensitive user data | Encrypted storage (e.g. MMKV with encryption key held in Keychain/Keystore) | Session data, personal profile cache |
+| Non-sensitive preferences | AsyncStorage / plain MMKV | Theme, locale, onboarding flags |
+
+**Forbidden:**
+
+- Tokens, passwords, or PII in plain AsyncStorage, `localStorage` (web), or files in the
+  app sandbox without encryption.
+- Encryption keys hard-coded in JS or derived from static app constants — keys live in the
+  platform keystore.
+- Hand-rolled cryptography. Use platform crypto through vetted libraries; standard
+  algorithms only (AES-256-GCM for symmetric encryption, SHA-256+ for hashing,
+  platform PBKDF/Argon2 for key derivation).
+
+## PII handling
+
+- Classify fields when designing a store: secret / sensitive / non-sensitive. The store doc
+  records the classification.
+- `partialize` persisted store state so sensitive fields are excluded or routed to the
+  encrypted tier.
+- On logout: wipe all sensitive tiers (Keychain entries, encrypted stores, in-memory
+  state). Logout is a data-destruction event, not just a navigation event.
+- Honor data-deletion requests end-to-end: local wipe + server-side deletion call.
+
+## Logging and telemetry
+
+- **Never log** tokens, credentials, PII, or full API payloads — in `console.*`, crash
+  reporters, or analytics.
+- Crash-reporting breadcrumbs carry identifiers (IDs, screen names), never contents.
+- `console.log` statements are stripped from release builds (Babel transform); crash
+  reporters are the release-channel telemetry.
+
+## Screen-level protection
+
+- Screens rendering sensitive data (financial, health, credentials) enable the platform
+  screenshot/recording protection where the product requires it, and mask content in the
+  app switcher snapshot.
+- Sensitive fields use `secureTextEntry` and disable keyboard autofill/suggestions where
+  inappropriate (`autoComplete="off"`, `importantForAutofill="no"` case by case).
+- Clipboard: never auto-copy sensitive values; when copy is a feature, prefer expiring
+  clipboard APIs where available.
+
+## Backups
+
+- Exclude sensitive files/preferences from OS backups (`android:allowBackup="false"` or a
+  scoped backup ruleset on Android; appropriate Keychain accessibility classes on iOS —
+  `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` for device-bound secrets).

@@ -1,0 +1,46 @@
+---
+description: Non-negotiable engineering principles for {{PROJECT_NAME}}
+alwaysApply: true
+---
+
+# Core principles (non-negotiable)
+
+Code violating any item below does not merge. These principles apply to every change,
+regardless of size or urgency.
+
+1. **Cross-platform parity** — every component, hook, store, and screen works on **iOS**,
+   **Android**, and **Web** (`react-native-web`), plus Storybook where applicable.
+   New Architecture (Fabric + TurboModules) is the default on both native platforms.
+2. **Design System first** — new UI is composed from design-system primitives
+   (see `design-system/01-foundation.mdc`). Missing primitives are created **before**
+   the consuming screen, never "promoted later."
+3. **Componentization is law** — every reusable surface is a self-contained package with
+   its own stories, docs, and colocated tests.
+4. **Business rules are isolated and tested** — any decision expressible without React
+   lives in a pure module (`*Rules.ts`, `*Adapter.ts`, `*Manager.ts`) with a colocated
+   `*.test.ts`. Screens, stores, and components consume rules; they never duplicate them inline.
+5. **Security by default** — data protection, transport security, input validation, and
+   deep-link hardening are part of the design of every feature, not an afterthought
+   (see `security/`).
+6. **Accessibility is mandatory** — every interactive surface declares `accessibilityRole`,
+   an explicit label, `accessibilityState` for disabled/busy/selected/checked, and meets
+   the minimum touch target of the primitive it uses.
+7. **Zero tolerance for TypeScript and lint errors** — every modified file is validated and
+   clean **before** the change is considered complete. CI is a backstop, never a substitute
+   for local discipline.
+8. **All test suites pass** — a work cycle ends with the full Jest suite green. A failing or
+   skipped test introduced by a change is a regression, not a TODO.
+9. **English-only developer text** — comments, JSDoc, tests, commit messages, and docs are
+   written in English. End-user copy is localized through the i18n system.
+10. **i18n is mandatory for user-visible copy** — all strings shown to users come from the
+    i18n catalogs, with real translations for every supported locale in the same change.
+    Hard-coded user-facing text is forbidden in product code.
+11. **Performance analysis is part of every change** — hot paths, lists, animations, and new
+    dependencies are evaluated for algorithmic complexity, render cost, bundle weight, and
+    lifecycle cleanup (see `development/07-performance.mdc`).
+12. **In-code documentation is mandatory** — JSDoc on every exported function, hook, store
+    action, type, and component; anchor comments above non-obvious logic
+    (see `development/04-typescript-documentation.mdc`).
+13. **Errors are triaged, never suppressed** — `// @ts-ignore`, `as any`, non-null assertions
+    on un-narrowed values, and ad-hoc `eslint-disable` lines are not used to bypass triage
+    (see `workflow/01-quality-gates.mdc`).

@@ -1,0 +1,68 @@
+---
+description: File structure — style isolation, rules extraction, no monoliths
+globs: src/screens/**/*.{ts,tsx},src/components/**/*.{ts,tsx},src/features/**/*
+alwaysApply: false
+---
+
+# Project file structure
+
+Three concerns, three file kinds. Mixing them is a review blocker.
+
+| File | Owns |
+|---|---|
+| `*.tsx` | Markup, composition, wiring — **no** business rules, **no** style declarations |
+| `styled.ts` | All `StyleSheet.create` / styled-components declarations and stable style objects |
+| `<name>Rules.ts` | Pure decisions, with a colocated `*.test.ts` |
+
+## Top-level layout
+
+```
+src/
+├── components/     # Reusable UI — design-system packages live here
+├── screens/        # Screen components (grouped by auth state or domain)
+├── stores/         # Zustand stores by feature domain
+├── features/       # Pure feature logic (rules modules)
+├── mappers/        # API request/response mapping
+├── hooks/          # Custom React hooks
+├── navigation/     # Navigators, route params, linking config
+├── lib/            # Core services (HTTP client, WebSocket client, storage)
+├── theme/          # Design tokens (colors, typography, measures)
+├── i18n/           # Locales and i18n setup
+└── utils/          # Cross-cutting pure helpers
+```
+
+## styled.ts rules
+
+- **Never** declare styles inside `*.tsx` — including inline `style={{ … }}` objects that
+  should be stable declarations.
+- Colors and spacing are token-driven — no hard-coded hex or pixel values in `styled.ts`
+  either (see `design-system/02-package-conventions.mdc`).
+- One `styled.ts` per component folder; a shared hub `styled.ts` only when styles are
+  genuinely shared.
+- Web variants: `styled.web.ts` mirroring the native exports.
+
+## No monoliths
+
+- Hub files (navigators, registries) **wire and register only** — one screen/component body
+  per subfolder.
+- Split immediately when: multiple exported screens accumulate in one file, styles appear in
+  a `.tsx`, or logic belongs in a `*Rules.ts`.
+
+## Canonical leaf layout
+
+```
+<ScreenName>/
+├── <ScreenName>.tsx
+├── styled.ts
+├── <screenName>Rules.ts
+├── <screenName>Rules.test.ts
+├── types.ts          # optional
+└── index.ts
+```
+
+## Imports
+
+- Folders expose a barrel `index.ts`; consumers import the folder, not deep paths.
+- **Inside** a package: relative imports between siblings — never the package's own alias
+  barrel (circular-dependency risk).
+- **Across** features: path aliases — never `../../../` climbs.

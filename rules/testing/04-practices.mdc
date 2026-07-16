@@ -1,0 +1,60 @@
+---
+description: Test shape, standard mocks, naming, and regression policy
+globs: **/*.test.{ts,tsx},**/*.integration.test.tsx
+alwaysApply: false
+---
+
+# Testing practices
+
+## AAA shape
+
+Every test follows Arrange–Act–Assert:
+
+- **Arrange** — the minimum data needed (shared builders, `setState`, `mockReturnValue`).
+- **Act** — a single clear call.
+- **Assert** — the result, or `toHaveBeenCalledWith` (use `expect.objectContaining` to keep
+  assertions focused).
+
+## Mocks
+
+- `jest.mock('module', factory)` at the top of the file; `beforeEach(() => jest.clearAllMocks())`
+  whenever mocks are shared between tests.
+- Whole-module mocks are fine for heavy registries — add a comment explaining why when the
+  mock list is long.
+- Shared test-data builders live in `src/__testHelpers__/` — never copy-pasted fixtures.
+
+## Standard boundary mocks
+
+| Boundary | Standard |
+|---|---|
+| AsyncStorage / MMKV | The official jest mock from the package — not hand-rolled objects |
+| i18n in pure rules | Stub translation function returning the key |
+| i18n in components | Mock the translation hook → `t: (key) => key`; assert on **keys**, not sentences |
+| HTTP | Mock the shared HTTP client at module level; assert the call and the state transition |
+| Timers / dates | `jest.useFakeTimers()` or `jest.spyOn(Date, 'now')` — never wall-clock dependence |
+
+## Naming
+
+- `describe` = module or function name.
+- `it` = a sentence describing observable behavior:
+  `it('sorts expired items after active ones')`.
+- Forbidden: `it('works', ...)` and other non-descriptive names.
+
+## Avoid
+
+- Testing third-party library internals.
+- One giant integration file re-testing every screen.
+- Storybook-only coverage for business rules.
+
+## Regression policy
+
+For every fixed bug in ordering, visibility, validation, or mapping: add **one test case
+that failed before the fix**. Regression tests are never deleted without a documented cause.
+
+## How to add a test (decision tree)
+
+1. Pure calculation? → put it in a `*Rules.ts` and add a colocated `*.test.ts`.
+2. Store logic? → `<Domain>.test.ts` with mocked HTTP/storage; reset state in `beforeEach`.
+3. Full screen composition? → smoke test with heavy children mocked; prefer extracting the
+   pure logic instead of testing it through the screen.
+4. Need test data? → use or extend the shared builders in `src/__testHelpers__/`.

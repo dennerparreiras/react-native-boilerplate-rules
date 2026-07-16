@@ -1,0 +1,48 @@
+---
+description: Cross-platform compatibility — iOS, Android, Web, Storybook
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Cross-platform compatibility
+
+Every surface must run on iOS, Android, and Web. No platform is optional; "works on my
+simulator" is not a definition of done.
+
+## Runtime baseline
+
+- React 19+, React Native 0.80+ with the **New Architecture** enabled, Hermes engine.
+- `react-native-web` for the web target; TypeScript in `strict` mode.
+- No global error boundary as a safety net for bad data — render paths must not throw;
+  rules modules return typed fallbacks for malformed input.
+
+## Verification surfaces
+
+Before a change is complete, verify (or explicitly reason about) all of:
+
+| Surface | How |
+|---|---|
+| iOS | Run on simulator/device with the target environment |
+| Android | Run on emulator/device with the target environment |
+| Web | Run the web bundle via `react-native-web` |
+| Storybook | Stories render on native and web Storybook without console errors |
+
+## Sanctioned platform divergence (only these)
+
+- **Value-level divergence:** `Platform.select` / `Platform.OS` at the **smallest possible
+  scope** (a single style value or prop) — never wrapping whole components.
+- **Structural divergence:** a sibling `.web.tsx` / `.web.ts` file with the **same public
+  API** as the native file. Shared logic stays in a platform-neutral `*Rules.ts`.
+  Split into `.web.tsx` when more than 2–3 `Platform.OS === 'web'` branches accumulate.
+- **Keyboard handling:** owned by the design-system keyboard primitives — no screen-level
+  keyboard hacks.
+- **Safe area:** owned by the page/modal layout primitives — screens do not call
+  `useSafeAreaInsets` when already inside those layouts.
+
+## Forbidden
+
+- `process.platform` — use `Platform.OS`.
+- DOM APIs (`document`, `window.*`) without a web guard **and** a non-web fallback.
+- Dependencies without web support, unless isolated behind an adapter module with a
+  web-safe implementation.
+- Duplicating shared logic in platform files — extract to a neutral `*Rules.ts`.

@@ -1,0 +1,73 @@
+---
+description: Design-system-first contract — mandatory building blocks for all new UI
+globs: src/components/**/*.{ts,tsx},src/theme/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Design System foundation
+
+{{PROJECT_NAME}} builds all product UI from a small set of documented, tested, token-driven
+**design-system primitives**. This rulebook uses the prefix `ds` in examples
+(`dsButton`, `dsPanel`); pick one short prefix for your project and use it everywhere.
+
+## Contract
+
+Every new screen, modal, panel, list, and form composes design-system primitives:
+
+1. Find the matching primitive in the design-system documentation.
+2. If it does not exist → **create the primitive package first** (folder, `index.ts`,
+   component file, `styled.ts`, stories, rules, tests, doc page).
+3. Only then build the consuming screen.
+
+**Never** build bespoke screen UI intending to "promote it to the design system later."
+That promotion never happens; the debt compounds.
+
+## Naming and package layout
+
+- Prefix every primitive with the chosen design-system prefix; folder:
+  `src/components/dsComponentName/`.
+- Single-component package:
+
+```
+dsComponentName/
+├── index.ts                     # barrel
+├── dsComponentName.tsx          # markup and wiring only
+├── styled.ts                    # all style declarations
+├── dsComponentName.stories.tsx  # Storybook coverage
+├── <helper>Rules.ts             # extractable pure logic (optional)
+└── <helper>Rules.test.ts
+```
+
+- **Bounded multi-component packages** are allowed when several primitives share one
+  concern (e.g. a form family): several component files with shared rules in one folder
+  behind a single `index.ts` barrel.
+
+## Platform divergence inside primitives
+
+Same public API on iOS, Android, and Web:
+
+- **Value-level:** `Platform.select` at the smallest scope.
+- **Implementation-level:** `.web.tsx` / `.web.ts` sibling with identical exports; shared
+  logic in a platform-neutral `*Rules.ts`.
+- Split into a `.web.tsx` when more than 2–3 web branches accumulate.
+- Both variants are exercised in native and web Storybook.
+
+## Layer ownership (quick reference)
+
+| Need | Use |
+|---|---|
+| Surface / card | panel primitive |
+| Action | button / icon-button primitive |
+| Read-only text | typography primitive with variant tokens |
+| Editable text | text-input primitive |
+| Page shell | page-layout primitive (padding, safe area, keyboard) |
+| Modal | modal provider + modal-layout primitive |
+| Toast / feedback | global toast host via its hook |
+| Navigation chrome | header and bottom-bar primitives |
+
+## Legacy policy
+
+Components that pre-date the design-system foundation are migrated incrementally. New code
+never introduces more legacy: no legacy typography helpers, no third-party UI kits for new
+product surfaces, no wrapping children in raw loaders when the button primitive has a
+loading state.
